@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mouse Particle Trail</title>
+    <style>
+        /* スタイル */
+        body {
+            margin: 0;
+            overflow: hidden; /* スクロールバーを非表示にする */
+            background-color: #000; /* 背景色を黒に設定 */
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="particleCanvas"></canvas>
+
+    <script>
+        // JavaScript
+        const canvas = document.getElementById('particleCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // キャンバスのサイズをウィンドウ全体に合わせる
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        let particles = [];
+        let mouse = {
+            x: null,
+            y: null
+        };
+
+        //  ウィンドウサイズが変更されたらキャンバスサイズも更新
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
+        //  マウスの移動イベントで座標を更新
+        window.addEventListener('mousemove', (event) => {
+            mouse.x = event.x;
+            mouse.y = event.y;
+            // マウスの位置に新しいパーティクルを生成
+            for (let i = 0; i < 5; i++) { // 一度に生成するパーティクルの数
+                particles.push(new Particle(mouse.x, mouse.y));
+            }
+        });
+
+        /**
+         * 粒子 (Particle) クラス
+         */
+        class Particle {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                // わずかにランダム性を加えて、きれいに軌跡が広がるようにする
+                this.size = Math.random() * 5 + 1; // 粒子のサイズ
+                this.speedX = Math.random() * 3 - 1.5; // X方向の速度 (-1.5から1.5)
+                this.speedY = Math.random() * 3 - 1.5; // Y方向の速度 (-1.5から1.5)
+                this.color = 'hsl(' + Math.random() * 360 + ', 100%, 50%)'; // カラフルな色
+                this.opacity = 1; // 透明度
+            }
+
+            // 粒子の位置を更新
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                // 粒子のサイズを徐々に小さくする（消えていく効果）
+                if (this.size > 0.2) this.size -= 0.1;
+                // 透明度を徐々に下げる
+                this.opacity -= 0.02;
+            }
+
+            // 粒子を描画
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.globalAlpha = this.opacity; // 透明度を設定
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalAlpha = 1; // 透明度を元に戻す
+            }
+        }
+
+        /**
+         * アニメーションループ
+         */
+        function animate() {
+            // 前回の描画を薄く残すことで、軌跡（トレイル）効果を生み出す
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)'; // 黒の半透明
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // 全ての粒子を更新・描画
+            for (let i = 0; i < particles.length; i++) {
+                particles[i].update();
+                particles[i].draw();
+            }
+
+            // 寿命が尽きた（サイズが小さくなった、または透明度が0になった）粒子を配列から除去
+            particles = particles.filter(particle => particle.size > 0.2 && particle.opacity > 0);
+
+            // 次のフレームをリクエスト
+            requestAnimationFrame(animate);
+        }
+
+        //  アニメーション開始
+        animate();
+    </script>
+</body>
+</html>
